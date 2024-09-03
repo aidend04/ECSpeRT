@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-100">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        th,
+        td {
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        /* Ensure the navbar stays at the top */
+        .sticky-navbar {
+            position: -webkit-sticky;
+            /* For Safari */
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+    </style>
+</head>
+
+<body class="h-full flex flex-col">
+    <nav class="bg-white shadow-md sticky-navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                            alt="Logo">
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/user-home"
+                            class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Day
+                            Form</a>
+                        <a href="/user-overnight"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Overnight
+                            Form</a>
+                        <a href="/logout"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <main class="flex-grow">
+        <div id="form-div" class="bg-white max-w-lg w-full rounded-lg shadow-lg p-6 mx-auto mt-4">
+            <form>
+                <div class="overflow-x-auto">
+                    <table class="table-auto w-full">
+                        <thead class="bg-blue-500 text-white">
+                            <tr>
+                                <th class="px-4 py-2">Shift Slots</th>
+                                <th class="px-4 py-2">08:00-11:00</th>
+                                <th class="px-4 py-2">11:00-14:00</th>
+                                <th class="px-4 py-2">14:00-18:00</th>
+                                <th class="px-4 py-2">18:00-22:00</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2 text-left">Monday</th>
+                                <td id="mon:8-11" class="text-center"><input type="checkbox"></td>
+                                <td id="mon:11-14" class="text-center"><input type="checkbox"></td>
+                                <td id="mon:14-18" class="text-center"><input type="checkbox"></td>
+                                <td id="mon:18-22" class="text-center"><input type="checkbox"></td>
+                            </tr>
+                            <tr>
+                                <th class="px-4 py-2 text-left">Tuesday</th>
+                                <td id="tue:8-11" class="text-center"><input type="checkbox"></td>
+                                <td id="tue:11-14" class="text-center"><input type="checkbox"></td>
+                                <td id="tue:14-18" class="text-center"><input type="checkbox"></td>
+                                <td id="tue:18-22" class="text-center"><input type="checkbox"></td>
+                            </tr>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2 text-left">Wednesday</th>
+                                <td id="wed:8-11" class="text-center"><input type="checkbox"></td>
+                                <td id="wed:11-14" class="text-center"><input type="checkbox"></td>
+                                <td id="wed:14-18" class="text-center"><input type="checkbox"></td>
+                                <td id="wed:18-22" class="text-center"><input type="checkbox"></td>
+                            </tr>
+                            <tr>
+                                <th class="px-4 py-2 text-left">Thursday</th>
+                                <td id="thu:8-11" class="text-center"><input type="checkbox"></td>
+                                <td id="thu:11-14" class="text-center"><input type="checkbox"></td>
+                                <td id="thu:14-18" class="text-center"><input type="checkbox"></td>
+                                <td id="thu:18-22" class="text-center"><input type="checkbox"></td>
+                            </tr>
+                            <tr class="bg-gray-100">
+                                <th class="px-4 py-2 text-left">Friday</th>
+                                <td id="fri:8-11" class="text-center"><input type="checkbox"></td>
+                                <td id="fri:11-14" class="text-center"><input type="checkbox"></td>
+                                <td id="fri:14-18" class="text-center"><input type="checkbox"></td>
+                                <td id="fri:18-22" class="text-center"><input type="checkbox"></td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                <div class="mt-4">
+                    <input placeholder="Clip-a-note" id="clip-note" type="text" maxlength="200"
+                        class="border-2 w-full p-2 rounded-md">
+                    <p class="text-gray-500 text-xs mt-1">Max 200 Characters</p>
+                </div>
+                <div class="flex justify-center mt-4">
+                    <button type="submit" class="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+                        Submit
+                    </button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script src="/scripts/user-form.js"></script>
+</body>
+
+</html>

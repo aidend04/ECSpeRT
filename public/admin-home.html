@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-100">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+
+
+
+
+    <style>
+        .chart-container {
+            position: relative;
+            height: 200px;
+            width: 100%;
+        }
+
+        .user-widget {
+            position: relative;
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            bottom: 100%; 
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .user-widget:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+    </style>
+</head>
+
+<body class="h-full">
+
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                            alt="Logo">
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/admin"
+                            class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Day Scheduler</a>
+                        <a href="/admin/overnight"
+                           class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Overnight Scheduler</a>
+                        <a href="/admin/user-panel"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">User
+                            Panel</a>
+                        <a href="/logout"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <!-- Calendar View -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+            <div id="week-view" class="overflow-x-auto">
+                <table id="cal" class="min-w-full bg-white border rounded-lg">
+                    <thead>
+                        <tr class="bg-gray-200 text-left">
+                            <th class="py-2 px-4 border">Time</th>
+                            <th class="py-2 px-4 border">Monday</th>
+                            <th class="py-2 px-4 border">Tuesday</th>
+                            <th class="py-2 px-4 border">Wednesday</th>
+                            <th class="py-2 px-4 border">Thursday</th>
+                            <th class="py-2 px-4 border">Friday</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <th class="py-2 px-4 border">08:00-11:00</th>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('08:00-11:00', 'Monday')">
+                                <div id="mon:8-11">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('08:00-11:00', 'Tuesday')">
+                                <div id="tue:8-11">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('08:00-11:00', 'Wednesday')">
+                                <div id="wed:8-11">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('08:00-11:00', 'Thursday')">
+                                <div id="thu:8-11">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('08:00-11:00', 'Friday')">
+                                <div id="fri:8-11">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="py-2 px-4 border">11:00-14:00</th>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('11:00-14:00', 'Monday')">
+                                <div id="mon:11-14">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('11:00-14:00', 'Tuesday')">
+                                <div id="tue:11-14">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('11:00-14:00', 'Wednesday')">
+                                <div id="wed:11-14">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('11:00-14:00', 'Thursday')">
+                                <div id="thu:11-14">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('11:00-14:00', 'Friday')">
+                                <div id="fri:11-14">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="py-2 px-4 border">14:00-18:00</th>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('14:00-18:00', 'Monday')">
+                                <div id="mon:14-18">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('14:00-18:00', 'Tuesday')">
+                                <div id="tue:14-18">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('14:00-18:00', 'Wednesday')">
+                                <div id="wed:14-18">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('14:00-18:00', 'Thursday')">
+                                <div id="thu:14-18">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('14:00-18:00', 'Friday')">
+                                <div id="fri:14-18">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                        </tr>
+                        <tr>
+                            <th class="py-2 px-4 border">18:00-22:00</th>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('18:00-22:00', 'Monday')">
+                                <div id="mon:18-22">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('18:00-22:00', 'Tuesday')">
+                                <div id="tue:18-22">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('18:00-22:00', 'Wednesday')">
+                                <div id="wed:18-22">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('18:00-22:00', 'Thursday')">
+                                <div id="thu:18-22">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                            <td class="py-2 px-4 border cursor-pointer"
+                                onclick="showMiniChart('18:00-22:00', 'Friday')">
+                                <div id="fri:18-22">
+                                    <ul></ul>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <div class="flex flex-col sm:flex-row justify-between mb-4 mt-4">
+                <button onclick="saveAll()" class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Save</button>
+                <button 
+                onclick="createPdf()" class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 mt-2 sm:mt-0">Export</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Day View of the current edit -->
+            <div id="edit-section" class="bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-lg font-medium mb-4">Current Edit Section</h2>
+                <p class="mt-2 mb-0">Filtered:</p>
+                <div id="filtered" class="rounded border mb-2 p-2">
+                    Please Select a Slot
+                </div>
+                <p class="mt-2 mb-0">All:</p>
+                <div id="allDiv" class="rounded border p-2">
+                    
+                </div>
+            </div>
+
+            <!-- User Section -->
+            <!-- User Section -->
+<div id="user-section" class="bg-white shadow-lg rounded-xl p-6 max-w-md mx-auto">
+    <h2 class="text-xl font-semibold text-gray-800 mb-6">User Section</h2>
+
+    <div id="selected-slot-info" class="bg-gray-100 p-4 rounded-lg mb-6">
+        <h3 class="text-lg font-medium text-gray-700" id="slot-title">Selected Slot: Not Selected</h3>
+    </div>
+
+    <div id="user-list" class="border border-gray-300 p-4 rounded-lg bg-gray-50">
+        <!-- User list items go here -->
+    </div>
+
+    <button
+        onclick="addIt()"
+        class="mt-6 w-full bg-blue-600 text-white font-medium py-2 rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
+        Save to Calendar
+    </button>
+</div>
+
+
+        </div>
+    </div>
+
+    <script src="/scripts/admin-home.js">
+    </script>
+</body>
+
+</html>

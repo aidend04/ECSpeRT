@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-100">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        th,
+        td {
+            border: 1px solid #e2e8f0;
+        }
+
+        table {
+            width: 100%;
+        }
+
+        /* Ensure the navbar stays at the top */
+        .sticky-navbar {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+    </style>
+</head>
+
+<body class="h-full flex flex-col">
+    <nav class="bg-white shadow-md sticky-navbar">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                            alt="Logo">
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/user-home"
+                             class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Day
+                            Form</a>
+                        <a href="/user-overnight"
+                            class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Overnight
+                            Form</a>
+                        <a href="/logout"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+    <main class="flex-grow p-6">
+            <form id="overnight" class="w-full">
+                <p class="text-gray-700 space-y-4">There is currently no overnight form.</p>
+            </form>
+
+    </main>
+
+    <script src="/scripts/userform-overnight.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,903 @@
+<!DOCTYPE html>
+<html class="h-full bg-gray-100">
+
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.27/jspdf.plugin.autotable.min.js"></script>
+
+
+
+    <style>
+        .user-slot {
+            min-height: 50px;
+            background-color: #f9f9f9;
+            border: 1px dashed #ddd;
+            padding: 5px;
+            border-radius: 4px;
+            margin-top: 5px;
+        }
+
+                .user-widget {
+            position: relative;
+            display: inline-block;
+            padding: 10px;
+            margin: 5px;
+            background-color: #f0f0f0;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            visibility: hidden;
+            position: absolute;
+            background-color: #333;
+            color: #fff;
+            padding: 10px;
+            border-radius: 5px;
+            bottom: 100%; 
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+            z-index: 1;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .user-widget:hover .tooltip {
+            visibility: visible;
+            opacity: 1;
+        }
+
+    </style>
+</head>
+
+<body class="h-full">
+
+    <nav class="bg-white shadow-md sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex">
+                    <div class="flex-shrink-0 flex items-center">
+                        <img class="h-8 w-8" src="https://tailwindui.com/img/logos/workflow-mark-indigo-600.svg"
+                            alt="Logo">
+                    </div>
+                    <div class="hidden sm:ml-6 sm:flex sm:space-x-8">
+                        <a href="/admin"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Day
+                            Scheduler</a>
+                        <a href="/admin/overnight"
+                            class="border-indigo-500 text-gray-900 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Overnight
+                            Scheduler</a>
+                        <a href="/admin/user-panel"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">User
+                            Panel</a>
+                        <a href="/logout"
+                            class="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mx-auto p-4">
+        <!-- Calendar Control -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+            <div class="flex justify-between">
+                <button onclick="promptNewCalendar()"
+                    class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Create New Calendar</button>
+                <button onclick="emailAvailability()"
+                    class="bg-yellow-600 text-white py-2 px-4 rounded-md hover:bg-yellow-700">Email
+                    Availability</button>
+            </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div class="bg-white shadow-md rounded-lg p-6 mb-4">
+            <div id="calendar-view" class="overflow-x-auto">
+                <table id="cal" class="min-w-full bg-white border rounded-lg">
+                    <thead>
+                        <tr class="bg-gray-200 text-left">
+                            <th class="py-2 px-4 border">Monday</th>
+                            <th class="py-2 px-4 border">Tuesday</th>
+                            <th class="py-2 px-4 border">Wednesday</th>
+                            <th class="py-2 px-4 border">Thursday</th>
+                            <th class="py-2 px-4 border">Friday</th>
+                        </tr>
+                    </thead>
+                    <tbody id="calendar-body">
+                        <!-- Days will be generated here dynamically -->
+                    </tbody>
+                </table>
+            </div>
+            <div class="flex flex-col sm:flex-row justify-between mb-4 mt-4">
+                <button onclick="saveAll()"
+                    class="bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700">Save</button>
+                <button onclick="createPdf()"
+                    class="bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 mt-2 sm:mt-0">Export</button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            <!-- Day View of the current edit -->
+            <div id="edit-section" class="bg-white shadow-md rounded-lg p-6">
+                <h2 class="text-lg font-medium mb-4">Current Edit Section</h2>
+                <p class="mt-2 mb-0">Filtered:</p>
+                <div id="filtered" class="rounded border mb-2 p-2">Please Select a Slot</div>
+                <p class="mt-2 mb-0">All:</p>
+                <div id="allDiv" class="rounded border p-2"></div>
+            </div>
+
+            <!-- User Section -->
+            <div id="user-section" class="bg-white shadow-lg rounded-xl p-6 max-w-md mx-auto">
+                <h2 class="text-xl font-semibold text-gray-800 mb-6">User Section</h2>
+                <div id="selected-slot-info" class="bg-gray-100 p-4 rounded-lg mb-6">
+                    <h3 class="text-lg font-medium text-gray-700" id="slot-title">Selected Slot: Not Selected</h3>
+                </div>
+                <div id="user-list" class="border border-gray-300 p-4 rounded-lg bg-gray-50">
+                    <!-- User list items go here -->
+                </div>
+                <button onclick="addIt()"
+                    class="mt-6 w-full bg-blue-600 text-white font-medium py-2 rounded-lg shadow hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">Save
+                    to Calendar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+
+        let UserList;
+        window.onload = function() {
+
+            fetch('/data/overnightCal', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": "application/json"
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                console.log(data);
+                let calendar = document.getElementById('cal');
+
+                if (data.cal !== 'no saved cal'){
+                    calendar.innerHTML = data.cal;
+                }
+
+                getData();
+
+                let cells = document.querySelectorAll('td');
+                console.log(cells);
+
+                cells = Array.from(cells);
+
+                console.log(cells);
+
+
+                for (let cell of cells){
+
+                    let day = cell.querySelector('div');
+
+                    day = day ? day.textContent : ''; 
+
+                    console.log(day + 'this is day')
+
+                    console.log(day);
+
+                    if (!isNaN(day) && day !== ""){
+                        cell.addEventListener('click', function () {
+                            showMiniChart(day);
+                        })
+                    }
+
+                }
+            })
+        }
+
+
+        function promptNewCalendar() {
+            const year = prompt("Enter the year:", new Date().getFullYear());
+            const month = prompt("Enter the month (0 for January, 11 for December):", new Date().getMonth());
+            createNewCalendar(parseInt(year), parseInt(month));
+        }
+
+    function createNewCalendar(year, month) {
+        const monthNames = [
+            "January", "February", "March", "April", "May", "June",
+            "July", "August", "September", "October", "November", "December"
+        ];
+
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const firstDay = new Date(year, month, 1).getDay();
+        const calendarBody = document.getElementById("calendar-body");
+
+        // Clear previous calendar
+        calendarBody.innerHTML = "";
+
+        // Create a header row with the month and year
+        const headerRow = document.createElement("tr");
+        const headerCell = document.createElement("td");
+        headerCell.colSpan = 5; // Span across the entire week
+        headerCell.className = "py-4 px-4 text-center font-bold text-lg border-b"; // You can adjust the styling as needed
+        headerCell.innerText = `${monthNames[month]} ${year}`;
+        headerRow.appendChild(headerCell);
+        calendarBody.appendChild(headerRow);
+
+        let row = document.createElement("tr");
+
+        // Add empty cells for days before the first weekday of the month
+        let paddingDays = firstDay >= 1 && firstDay <= 5 ? firstDay - 1 : 0;
+        for (let i = 0; i < paddingDays; i++) {
+            const cell = document.createElement("td");
+            cell.className = "py-2 px-4 border";
+            row.appendChild(cell);
+        }
+
+        // Add cells for each day in the month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dayOfWeek = date.getDay();
+
+            // Skip weekends
+            if (dayOfWeek >= 1 && dayOfWeek <= 5) {
+                const cell = document.createElement("td");
+                cell.className = "py-2 px-4 border";
+
+
+                const dayDiv = document.createElement("div");
+                dayDiv.className = "font-semibold mb-2";
+                dayDiv.id = day;
+                dayDiv.innerText = day;
+
+                const userDiv = document.createElement("div");
+                userDiv.id = `day-${day}`;
+                userDiv.className = "user-slot";
+
+                cell.appendChild(dayDiv);
+                cell.appendChild(userDiv);
+                row.appendChild(cell);
+            }
+
+            // Add the row to the calendar body at the end of the week or month end
+            if (date.getDay() === 5) { // End of week (Friday)
+                calendarBody.appendChild(row);
+                row = document.createElement("tr");
+            }
+        }
+
+        // Fill the last row with empty cells if necessary
+        if (row.children.length > 0) {
+            const lastDay = new Date(year, month + 1, 0).getDay();
+            if (lastDay >= 1 && lastDay <= 5) {
+                for (let i = lastDay; i < 5; i++) {
+                    const cell = document.createElement("td");
+                    cell.className = "py-2 px-4 border";
+                    row.appendChild(cell);
+                }
+            }
+            calendarBody.appendChild(row);
+        }
+
+        let calHtml = document.getElementById('cal').innerHTML;
+
+        console.log(calHtml);
+
+        saveCal(calHtml);
+
+        convertCalendarToForm();
+
+    }
+
+
+        function saveCal(calHtml) {
+            fetch('/data/saveCal', {
+                method: 'POST',
+                headers: {
+                    "Content-Type": 'application/json'
+                },
+                body: JSON.stringify({html: calHtml })
+            })
+            .then(response => response.json())
+            .then(data => {
+
+            })
+            .catch(error => {
+                console.log(error);
+            })
+        }
+
+    function convertCalendarToForm() {
+        let calendarView = document.getElementById('calendar-view').cloneNode(true);
+        const calendarHtml = calendarView.innerHTML;
+
+        // Create a temporary div to manipulate the calendar HTML
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = calendarHtml;
+
+        // Get the month and year from the table header
+        const monthYearHeader = tempDiv.querySelector('tbody tr td');
+        const monthYearText = monthYearHeader ? monthYearHeader.textContent.trim() : 'No month/year found';
+
+        // Add a header for the form with month and year
+        const formHeader = document.createElement('div');
+        formHeader.className = 'text-center font-bold text-lg mb-4';
+        formHeader.innerText = `Availability Form - ${monthYearText}`;
+        tempDiv.insertBefore(formHeader, tempDiv.firstChild);
+
+        // Select all user-slot divs and replace their content with checkboxes
+
+        let days = [];
+        const userSlots = tempDiv.querySelectorAll('.user-slot');
+        userSlots.forEach(slot => {
+            const day = slot.id.split('-')[1]; // Extract the day number from the id
+
+            // Create the checkbox HTML
+            const checkboxHtml = `
+            <input type="checkbox" id="available-${day}" name="available-${day}" value="day-${day}">
+            <label for="available-${day}" class="ml-2">Available on ${day}</label>
+        `;
+
+            // Replace the content of the user-slot div with the checkbox HTML
+            slot.innerHTML = checkboxHtml;
+            days.push(day);
+        });
+
+        // Create a form and append the modified calendar HTML
+        const form = document.createElement('form');
+        form.id = 'overnight';
+        form.className = 'space-y-4'; // Adjust spacing as needed
+        form.innerHTML = tempDiv.innerHTML;
+
+        // Add a submit button
+        const submitButton = document.createElement('button');
+        submitButton.type = 'submit';
+        submitButton.id = 'submit-btn';
+        submitButton.className = 'bg-blue-500 text-white py-2 px-4 rounded mx-auto block mt-4'; // Center and add top margin
+        submitButton.innerText = 'Submit Availability';
+        form.appendChild(submitButton);
+
+
+        // Replace the existing calendar view with the new form
+        calendarView.innerHTML = '';
+        calendarView.appendChild(form);
+
+        fetch('/data/overnightForm', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({html: calendarView.innerHTML, days: days})
+        })
+    }
+
+
+    function emailAvailability() {
+        fetch('/data/emailAvail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({})
+        }).then(response => response.json()).then(data => {
+            if (data.message === 'all good') {
+                alert('emails sent.');
+            } else {
+                alert('error sending emails, please try again.')
+            }
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+
+    function getData() {
+        fetch('/data/getAvail', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => response.json())
+        .then(data => {
+
+            console.log(data.avail);
+
+            UserList = JSON.parse(JSON.stringify(data.avail));
+
+            for (let day in UserList){
+                UserList[day] = [];
+            }
+
+
+            
+            let allUser = document.getElementById('allDiv');
+
+            for (let day in data.avail){
+                console.log(day);
+                console.log(data.avail[day])
+                for (let info of data.avail[day]){
+                    console.log(info)
+                    let findUser = document.getElementById(info[0]);
+
+                    console.log(findUser);
+
+                    if (findUser) {
+                        
+                        let tooltip = document.getElementById(info[0] + ' tooltip');
+
+                        let slotElm = tooltip.querySelector('.slots');
+
+                        slotElm.textContent += `, ${day}`
+
+
+                        let nodeCopy = findUser.cloneNode(true);
+                        nodeCopy.id = findUser.id + ' copied'
+                        UserList[day].push(nodeCopy);
+                    
+                    } else {
+
+                        let userWidget = document.createElement('div');
+
+                        userWidget.id = info[0];
+
+                        userWidget.className = 'user-widget';
+                        userWidget.textContent = info[0];
+
+
+                        let tooltip = document.createElement('div');
+
+                        tooltip.id = info[0] + ' tooltip';
+                        tooltip.className = 'tooltip';
+                        tooltip.innerHTML = `
+                            <div id='freeSlots'>
+                                <span class='slots'><strong>Free Slots:</strong> ${day}</span>
+                            </div>
+                        <strong>Rank:</strong> ${info[2]}
+                        `;
+
+                        userWidget.appendChild(tooltip);
+                        allUser.appendChild(userWidget);
+
+                        let nodeCopy = userWidget.cloneNode(true);
+                        nodeCopy.id = userWidget.id + ' copied';
+                        UserList[day].push(nodeCopy);
+                    }
+                }
+            }
+            // UserList = data.avail;
+        }).catch(error => {
+            console.log(error);
+        })
+    }
+
+        function saveAll() {
+            // Logic to save all changes
+        }
+
+        function createPdf() {
+            // Logic to create PDF from the current calendar
+        }
+
+        function addIt() {
+            // Logic to add user to calendar
+        }
+
+        function showMiniChart(day) {
+                const userList = document.getElementById('user-list');
+                const slotTitle = document.getElementById('slot-title');
+                const filteredDiv = document.getElementById('filtered');
+                const allDiv = document.querySelector('#edit-section .rounded.border.p-2');
+
+                // Update the slot info header
+                slotTitle.textContent = `Selected Slot: ${day}`;
+
+                userList.innerHTML = ''; // Clear previous list
+                filteredDiv.innerHTML = ''; // Clear filtered section
+                allDiv.innerHTML = ''; // Clear all section
+
+
+                UserList[day].forEach(elm => {
+                    filteredDiv.appendChild(elm);
+                });
+
+                let filteredDivr = document.getElementById('filtered');
+                let allDivr = document.getElementById('allDiv');
+
+                let filteredDivs = Array.from(filteredDivr.getElementsByTagName('div'));
+
+                let allDivs = Array.from(allDivr.getElementsByTagName('div'))
+
+                filteredDivs = filteredDivs.filter(elm => !elm.id.includes('tooltip') && elm.id !== 'freeSlots');
+
+                allDivs = allDivs.filter(elm => !elm.id.includes('tooltip') && elm.id !== 'freeSlots');
+
+                console.log(allDivs);
+
+                filteredDivs.forEach(elm => {
+                    elm.style.backgroundColor = '#F3F4F6';
+                })
+
+                allDivs.forEach(elm => {
+                    elm.style.backgroundColor = '#F3F4F6';
+                })
+
+                console.log(day);
+
+                console.log(UserList);
+
+
+
+                addClicks(day);
+
+                // let usersInSlot = document.getElementById(`${day.substring(0, 3).toLowerCase()}:${time}`);
+
+                let usersInSlot = document.getElementById(`day-${day.trim()}`)
+
+                let arrOfUsers = Array.from(usersInSlot.querySelectorAll('p'));
+
+                arrOfUsers.forEach(elm => {
+                    let name = elm.textContent.substring(1);
+
+                    let div = document.createElement('div');
+
+                //     time = document.getElementById('selected-slot-info').textContent;
+
+                //     time = time.substring(time.length - 17);
+
+                    div.innerHTML = `
+                    <div id="${name.trim() + 'add'}" class="added flex items-center space-x-2 p-2 bg-gray-100 rounded-md">
+                        <span class="text-gray-800 text-sm font-medium" id="user-name">${name.trim()}</span>
+                        <button onclick="removeDiv('${name.trim() + 'add'}')"
+                            class="bg-red-500 text-white text-sm rounded-md px-3 py-1 hover:bg-red-600 transition"
+                            id="remove-button"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                `;
+
+                    userList.appendChild(div);
+
+                    let findFiltered = document.getElementById(`${name.trim()} copied`);
+
+                    if (findFiltered) {
+                        findFiltered.style.backgroundColor = '#505050';
+                    }
+
+                    let findAll = document.getElementById(name.trim());
+
+                    findAll.style.backgroundColor = '#505050';
+
+                })
+
+                // console.log(time)
+            }
+
+    function addClicks(day) {
+        let filteredDiv = document.getElementById('filtered');
+        let allDiv = document.getElementById('allDiv');
+
+        let filteredDivs = Array.from(filteredDiv.getElementsByTagName('div'));
+
+        let allDivs = Array.from(allDiv.getElementsByTagName('div'));
+
+        filteredDivs.forEach(element => {
+            element.addEventListener('click', function () {
+
+                day = document.getElementById('selected-slot-info').textContent;
+
+                let trimmedDay = day.trim();
+                console.log(trimmedDay.substring(trimmedDay.length - 2));
+
+                let userList = document.getElementById('user-list');
+
+                let addDiv = document.createElement('div');
+
+                let start = element.id.length - 7;
+
+                            if (!document.getElementById(element.id.substring(0, start) + 'add') && !element.id.includes('tooltip') && element.id !== 'freeSlots') {
+
+                    addDiv.innerHTML = `
+                    <div id="${element.id.substring(0, start) + 'add'}" class="added flex items-center space-x-2 p-2 bg-gray-100 rounded-md">
+                        <span class="text-gray-800 text-sm font-medium" id="user-name">${element.id.substring(0, start)}</span>
+                        <button onclick="removeDiv('${element.id.substring(0, start) + 'add'}')"
+                            class="bg-red-500 text-white text-sm rounded-md px-3 py-1 hover:bg-red-600 transition"
+                            id="remove-button"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                `;
+
+
+                    element.style.backgroundColor = '#505050';
+
+                    document.getElementById(`${element.id.substring(0, start)}`).style.backgroundColor = '#505050';
+                    userList.appendChild(addDiv);
+                }
+
+            });
+        });
+
+         allDivs.forEach(element => {
+            element.addEventListener('click', function () {
+
+                let userList = document.getElementById('user-list');
+                let addDiv = document.createElement('div');
+
+                if (!document.getElementById(element.id + 'add') && !element.id.includes('tooltip') && element.id !== 'freeSlots') {
+
+                    addDiv.innerHTML = `
+                    <div id="${element.id + 'add'}" class="added flex items-center space-x-2 p-2 bg-gray-100 rounded-md">
+                        <span class="text-gray-800 text-sm font-medium" id="user-name">${element.id}</span>
+                         <button onclick="removeDiv('${element.id + 'add'}')"
+                            class="bg-red-500 text-white text-sm rounded-md px-3 py-1 hover:bg-red-600 transition"
+                            id="remove-button"
+                        >
+                            Remove
+                        </button>
+                    </div>
+                `;
+
+
+                    element.style.backgroundColor = '#505050';
+
+                    if (document.getElementById(`${element.id + ' copied'}`)) {
+                        document.getElementById(`${element.id + ' copied'}`).style.backgroundColor = '#505050';
+                    }
+
+                    userList.appendChild(addDiv);
+                }
+            });
+        });
+    }
+
+    function removeDiv(id) {
+            document.getElementById(id).parentNode.remove();
+            let start = id.length - 3;
+            if (document.getElementById(id.substring(0, start) + ' copied')) {
+                document.getElementById(id.substring(0, start) + ' copied').style.backgroundColor = '#F3F4F6';
+            }
+
+            document.getElementById(id.substring(0, start)).style.backgroundColor = '#F3F4F6';
+
+            document.getElementById(id.substring(0, start) + ' calSec').remove();
+    }
+
+    function addIt() {
+            let divs = document.getElementById('user-list')
+
+            let checkDivs = Array.from(divs.getElementsByTagName('div'));
+
+            if (checkDivs.length === 0 || checkDivs.length === 1) {
+                alert('add atleast one person please');
+                return;
+            }
+
+            let day = document.getElementById('selected-slot-info').textContent;
+
+            day = day.trim();
+
+            day = day.substring(day.length - 2);
+
+            console.log(day);
+
+            let calSec = document.getElementById(`day-${day.trim()}`);
+
+            
+            calSec.textContent = '';
+
+            let userList = document.getElementById('user-list');
+
+            let userArr = Array.from(userList.getElementsByClassName('added'));
+
+
+            userArr.forEach(element => {
+                let elm = document.createElement('p');
+                elm.id = `${element.id.substring(0, element.id.length - 3)} calSec`;
+                
+                elm.style.padding = 6;
+
+
+                elm.textContent = `-${element.id.substring(0, element.id.length - 3)}`
+                calSec.appendChild(elm)
+            });
+        }
+
+    function saveAll() {
+            fetch('/admin/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ html: document.documentElement.outerHTML })
+            })
+                .then(response => response.json())
+                .then(data => {
+                   alert('saved');
+                });
+        }
+
+    function saveAll() {
+
+    let calElm = document.getElementById('cal').innerHTML;
+
+    fetch('/data/saveCal', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({html: calElm})
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.message === 'good'){
+            alert('saved');
+        } else {
+            alert('error saving');
+        }
+    });
+}
+
+
+   async function createPdf() {
+        // Ask for the month and year
+        let monthYear = prompt('Please enter the month and year for this calendar (e.g., September 2024):');
+        if (!monthYear) {
+            alert('Month and year are required to generate the PDF.');
+            return;
+        }
+
+        confirm('This will email a schedule to all provided emails.');
+        alert('Creating PDF...');
+
+        // Retrieve the table data
+        let calendar = document.getElementById('cal');
+        if (!calendar) {
+            alert('No calendar found.');
+            return;
+        }
+
+        // Extract headers (days of the week) and the data for each day
+        let headers = Array.from(calendar.querySelectorAll('th')).map(th => th.innerText);
+
+        // Skip the first row in the data extraction
+        let rows = Array.from(calendar.querySelectorAll('tbody tr')).slice(1);
+
+        let data = rows.map(row => {
+            return Array.from(row.querySelectorAll('td')).map(td => {
+                // Extract text from each cell and clean it up
+                return td.innerText.trim();
+            });
+        });
+
+        // Convert logo image to Base64 function
+        const convertImageToBase64 = (url) => {
+            return new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.onload = function () {
+                    const reader = new FileReader();
+                    reader.onloadend = function () {
+                        resolve(reader.result);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(xhr.response);
+                };
+                xhr.onerror = reject;
+                xhr.open('GET', url);
+                xhr.responseType = 'blob';
+                xhr.send();
+            });
+        };
+
+        // Load jsPDF from the module
+        const { jsPDF } = window.jspdf;
+
+        // Create PDF
+        const pdf = new jsPDF('landscape', 'mm', 'a4');
+
+        // Convert logo image to Base64 and add to PDF
+        const logoUrl = '../images/logo.jpg'; // Update this path as needed
+        convertImageToBase64(logoUrl).then(logoDataUrl => {
+            // Add the logo to the PDF
+            pdf.addImage(logoDataUrl, 'JPEG', 10, 10, 40, 20);
+
+            // Add header text to the PDF
+            pdf.setFontSize(22);
+            pdf.setTextColor(33, 150, 243);
+            pdf.setFont("helvetica", "bold");
+            pdf.text('ECSpeRT Overnight Schedule', 60, 20);
+
+            pdf.setFontSize(16);
+            pdf.setTextColor(0, 0, 0);
+            pdf.setFont("helvetica", "normal");
+            pdf.text(`Month & Year: ${monthYear}`, 60, 30);
+
+            // Calculate available space for the table
+            const pageHeight = pdf.internal.pageSize.height;
+            const pageWidth = pdf.internal.pageSize.width;
+            const startY = 40;
+            const tableHeight = pageHeight - startY - 20; // 20 for bottom margin
+            const tableWidth = pageWidth - 20; // 10mm margin on each side
+
+            // Adjust font size and cell height dynamically
+            const fontSize = 10; // Smaller font size for fitting content
+            const cellHeight = 25; // Adjusted cell height
+            const tableOptions = {
+                startY: startY,
+                head: [headers],
+                body: data,
+                theme: 'grid',
+                styles: {
+                    fontSize: fontSize,
+                    cellPadding: 2,
+                    overflow: 'linebreak',
+                    halign: 'center',
+                    valign: 'middle',
+                    lineWidth: 0.1,
+                    lineColor: [0, 0, 0],
+                    minCellHeight: cellHeight,
+                    cellWidth: 'wrap', // Ensures text wrapping
+                },
+                headStyles: {
+                    fillColor: [30, 30, 30],
+                    textColor: 255,
+                    fontStyle: 'bold',
+                },
+                alternateRowStyles: {
+                    fillColor: [242, 242, 242]
+                },
+                tableWidth: tableWidth,
+                margin: { left: 10, right: 10 }, // Margin for entire table
+                columnStyles: {
+                    0: { cellWidth: 30 }, // Time column width
+                    1: { cellWidth: (tableWidth - 30) / (headers.length - 1) },
+                    // Adjust the width for each day column
+                },
+                didParseCell: function (data) {
+                    if (data.section === 'body' && data.cell.raw) {
+                        data.cell.styles.fillColor = [255, 255, 255];
+                        data.cell.styles.textColor = [0, 0, 0];
+                        data.cell.styles.fontStyle = 'normal';
+                    }
+                },
+                didDrawCell: function (data) {
+                    // Optional: Add any additional styling or conditional formatting here
+                }
+            };
+
+            // Draw the table
+            pdf.autoTable(tableOptions);
+
+            // Generate a blob URL and open in a new window
+            const pdfBlob = pdf.output('blob');
+            const pdfUrl = URL.createObjectURL(pdfBlob);
+            window.open(pdfUrl, '_blank');
+
+            // Send PDF to server
+            const formData = new FormData();
+            formData.append('pdf', pdfBlob, 'calendar.pdf');
+
+            fetch('/admin/send-night-pdf', {
+                method: 'POST',
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => console.log('PDF sent successfully:', data.message))
+                .catch(error => console.error('Error sending PDF:', error));
+
+        }).catch(error => {
+            console.error('Error converting image to Base64:', error);
+        });
+    }
+
+
+
+    </script>
+
+</body>
+
+</html>
